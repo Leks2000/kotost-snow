@@ -1,0 +1,27 @@
+# Kotost snow (native mod). Saved changes apply within a second; footprints and the
+# snow surface are rebuilt as you walk. px = texels (1/16 block).
+enabled = 1
+# snow drawn this much above its collision: feet sink in (0..6)
+lift_px = 3
+# a player's footprint depth (mobs scale it by size)
+depth_px = 5
+# blocks between two footprints of a walking player
+stride = 0.72
+# seconds a footprint stays, then seconds it takes to fill in
+fade_start = 150
+fade_len = 150
+# mobs leave footprints too
+mobs = 1
+# soft shading of slopes and footprints, and how blue the shade is (0..2)
+shade = 0.7
+blue = 0.6
+# snowfall: flakes in the wind, gusts; a blizzard (thunder) brings a white haze
+weather = 1
+# how many flakes (0..3)
+flakes = 1
+# snow dust kicked up by footsteps
+dust = 1
+# grass and bushes next to snow white with frost
+frost = 1
+# 1 = write kotost-snow-debug.log
+debug = 0

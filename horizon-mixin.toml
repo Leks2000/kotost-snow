@@ -1,0 +1,78 @@
+# Kotost snow: soft, smooth snow and footprints pressed into it by players and mobs (client only).
+# Native mod for Horizon nightly-2026-11-08-fdc87ae (docs/native-mods.md, horizon-mixins).
+# The imprint idea follows Soft Imprints by 0Templ (MIT); the code is written for Horizon.
+[mod]
+id = "kotost_snow"
+version = "0.1.0"
+priority = 100
+
+[compatibility]
+horizon_revision = "fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca"
+
+# Settings, footprints and walker tracks, in the renderer's crate so the mesher and the client both reach
+# it (horizon_client_render::kotost_snow).
+[[module]]
+id = "runtime"
+file = "crates/horizon-client-render/src/lib.rs"
+name = "kotost_snow"
+source = "runtime.rs"
+visibility = "pub"
+
+# A section is about to be meshed: where it is.
+[[injection]]
+id = "snow-fill"
+kind = "HEAD"
+target = "horizon_client_render::mesher::Padded::fill"
+helper = "snow_fill.rs"
+bindings = [
+  { name = "region", ty = "&[[Option<&Chunk>; 3]; 3]", value = "region" },
+  { name = "sy", ty = "i32", value = "sy" },
+]
+
+# Its padded blocks are filled: note where snow and walls are.
+[[injection]]
+id = "snow-section"
+kind = "HEAD"
+target = "horizon_client_render::mesher::solid_rows"
+helper = "snow_section.rs"
+bindings = [
+  { name = "pad", ty = "&Padded", value = "pad" },
+  { name = "solid", ty = "&[bool]", value = "solid" },
+]
+
+# Every quad the mesher emits: a snow block's top becomes one smooth surface with the footprints in it,
+# its sides follow the surface or go where two snow columns meet.
+[[injection]]
+id = "snow-quad"
+kind = "HEAD"
+cancellable = true
+target = "horizon_client_render::mesher::Mesher<'_>::quad"
+helper = "snow_quad.rs"
+bindings = [
+  { name = "mesher", ty = "&Mesher<'_>", value = "self" },
+  { name = "out", ty = "&mut SectionMesh", value = "&mut *out" },
+  { name = "solid_leaves", ty = "bool", value = "solid_leaves" },
+  { name = "tile", ty = "TileLayer", value = "tile" },
+  { name = "v", ty = "[TerrainVertex; 4]", value = "v" },
+  { name = "tint", ty = "Option<u32>", value = "tint" },
+]
+
+# Each client tick: follow players and mobs, press their feet into the snow, rebuild what changed.
+[[injection]]
+id = "snow-tick"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_client_tick_post"
+helper = "snow_tick.rs"
+bindings = [{ name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" }]
+
+# A blizzard's white haze: the world fog closes in.
+[[injection]]
+id = "snow-fog"
+kind = "HEAD"
+hook = "render_fog"
+hook_version = 1
+helper = "snow_fog.rs"
+bindings = [
+  { name = "fog_type", ty = "horizon_client::fog::FogType", value = "fog_type" },
+  { name = "fog", ty = "&mut horizon_client::fog::FogData", value = "&mut *fog" },
+]
