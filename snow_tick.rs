@@ -46,6 +46,50 @@ fn kotost_snow_tick(game: &mut crate::game::Game<'_>) {
         return;
     };
     let me = [p.position.x, p.position.y, p.position.z];
+    // A block edit rebuilds only the sections within one block of it, but a snow surface looks two cells
+    // around (its neighbours' neighbours): rebuild the snowy sections beside an edited one too, or snow
+    // stays drawn where it is gone (hanging in the air) or missing where it lies (invisible).
+    {
+        use std::sync::Mutex;
+        static ADDED: Mutex<Vec<(i32, i32, i32)>> = Mutex::new(Vec::new());
+        let mut added = ADDED.lock().unwrap_or_else(|e| e.into_inner());
+        let mut src: Vec<(i32, i32, i32)> = Vec::new();
+        'cols: for ((x, z), mask) in game.world.dirty_sections.columns() {
+            for sy in mask.iter() {
+                let k = (x, sy as i32, z);
+                if !added.contains(&k) {
+                    src.push(k);
+                    if src.len() > 24 {
+                        break 'cols;
+                    }
+                }
+            }
+        }
+        added.clear();
+        // Many at once: chunks arriving (rebuilt whole anyway), not an edit.
+        if !src.is_empty() && src.len() <= 24 {
+            let layout = game.world.layout();
+            let min_y = layout.min_y();
+            for &(sx, sy, sz) in &src {
+                for dz in -1..=1 {
+                    for dx in -1..=1 {
+                        let k = (sx + dx, sy, sz + dz);
+                        if (dx, dz) == (0, 0) || src.contains(&k) || added.contains(&k) {
+                            continue;
+                        }
+                        let lo = [k.0 * 16, min_y + sy * 16, k.2 * 16];
+                        let hi = [lo[0] + 15, lo[1] + 15, lo[2] + 15];
+                        if game.world.may_hold(lo, hi, |id| ks::is_snow(ks::kind(id.0))) {
+                            added.push(k);
+                        }
+                    }
+                }
+            }
+            for &k in added.iter() {
+                game.world.dirty_sections.insert(k);
+            }
+        }
+    }
     // Snow near the viewer is drawn finely: rebuild the snowy sections that enter or leave that ring.
     let (vx, vz) = (me[0].floor() as i32, me[2].floor() as i32);
     let old = ks::set_viewer(vx, vz);

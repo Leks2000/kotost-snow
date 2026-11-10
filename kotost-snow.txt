@@ -14,7 +14,7 @@ fade_len = 150
 mobs = 1
 # soft shading of slopes and footprints, and how blue the shade is (0..2)
 shade = 0.7
-blue = 0.6
+blue = 0.35
 # snowfall: flakes in the wind, gusts; a blizzard (thunder) brings a white haze
 weather = 1
 # how many flakes (0..3)
