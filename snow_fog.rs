@@ -1,5 +1,9 @@
 fn kotost_snow_fog(fog_type: horizon_client::fog::FogType, fog: &mut horizon_client::fog::FogData) {
     // A blizzard closes in: white haze, the world, the sky and the clouds fade out a few dozen blocks away.
+    // Off (`enabled = 0`): no haze, even if it was thick when the mod was turned off.
+    if !horizon_client_render::kotost_snow::tune().enabled {
+        return;
+    }
     let h = horizon_client_render::kotost_snow::haze().clamp(0.0, 1.0);
     if h < 0.01 || !matches!(fog_type, horizon_client::fog::FogType::Atmospheric) {
         return;

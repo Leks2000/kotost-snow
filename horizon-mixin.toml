@@ -3,7 +3,7 @@
 # The imprint idea follows Soft Imprints by 0Templ (MIT); the code is written for Horizon.
 [mod]
 id = "kotost_snow"
-version = "0.1.0"
+version = "0.1.1"
 priority = 100
 
 [compatibility]

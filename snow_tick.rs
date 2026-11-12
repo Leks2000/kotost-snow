@@ -39,6 +39,7 @@ fn kotost_snow_tick(game: &mut crate::game::Game<'_>) {
     }
     let tune = ks::tune();
     if !tune.enabled {
+        ks::calm();
         return;
     }
     let Some(p) = game.player.as_ref() else {

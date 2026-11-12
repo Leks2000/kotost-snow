@@ -1200,6 +1200,25 @@ pub fn haze() -> f32 {
     f32::from_bits(HAZE.load(std::sync::atomic::Ordering::Relaxed))
 }
 
+/// The mod is off (`enabled = 0`): drop the weather state, so no haze or fresh powder stays frozen.
+pub fn calm() {
+    *FALL.lock().unwrap_or_else(|e| e.into_inner()) = None;
+    HAZE.store(0.0f32.to_bits(), std::sync::atomic::Ordering::Relaxed);
+    FRESH.store(0.0f32.to_bits(), std::sync::atomic::Ordering::Relaxed);
+}
+
+#[cfg(test)]
+mod calm_tests {
+    #[test]
+    fn disabling_after_haze_clears_it() {
+        super::HAZE.store(0.7f32.to_bits(), std::sync::atomic::Ordering::Relaxed);
+        super::FRESH.store(0.1f32.to_bits(), std::sync::atomic::Ordering::Relaxed);
+        super::calm();
+        assert_eq!(super::haze(), 0.0);
+        assert_eq!(super::fresh(), 0.0);
+    }
+}
+
 /// One client tick of snowfall around the camera. `snowing`: snow (not rain) falls at the camera;
 /// `rain`, `thunder`: the weather's levels (0..1); `open(x, y, z)`: nothing above that spot.
 pub fn snowfall(
